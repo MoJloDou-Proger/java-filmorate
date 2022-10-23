@@ -5,6 +5,7 @@ import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.IdNotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static ru.yandex.practicum.filmorate.validation.Validation.validateFilm;
@@ -69,7 +70,7 @@ public class InMemoryFilmStorage implements FilmStorage {
 
     @Override
     public List<Film> getFilms(){
-        return films;
+        return new ArrayList<>(films);
     }
 
     private void increaseFilmId(){

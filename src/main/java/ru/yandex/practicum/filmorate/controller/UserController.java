@@ -15,7 +15,7 @@ import static ru.yandex.practicum.filmorate.validation.Validation.checkId;
 @RestController
 @RequestMapping("/users")
 public class UserController{
-    UserService userService;
+    private final UserService userService;
 
     @Autowired
     public UserController(UserService userService) {

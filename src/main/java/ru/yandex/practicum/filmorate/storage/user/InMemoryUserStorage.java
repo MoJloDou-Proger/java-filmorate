@@ -5,6 +5,7 @@ import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.IdNotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static ru.yandex.practicum.filmorate.validation.Validation.validateUser;
@@ -70,7 +71,7 @@ public class InMemoryUserStorage implements UserStorage{
     @Override
     public List<User> allUsers(){
         log.info("Получен GET-запрос на all");
-        return users;
+        return new ArrayList<>(users);
     }
 
     private void increaseUserId(){
