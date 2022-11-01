@@ -16,6 +16,8 @@ public class Film {
     private LocalDate releaseDate;
     private long duration;
     private Set<Integer> likes;
+    private Set<Genre> genre;
+    private MpaRating mpaRating;
 
     public Film(int id, String name, String description, LocalDate releaseDate, long duration) {
         this.id = id;
@@ -24,5 +26,6 @@ public class Film {
         this.releaseDate = releaseDate;
         this.duration = duration;
         this.likes = new HashSet<>();
+        this.genre = new HashSet<>();
     }
 }

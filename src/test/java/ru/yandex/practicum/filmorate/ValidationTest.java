@@ -44,7 +44,7 @@ public class ValidationTest {
         User user = new User(0, "", "login", "name", BIRTHDAY_DATE);
         checkException(user, "Почта не может быть пустой и должна содержать символ @");
 
-        User user1 = new User(0, "emaile.ru", "login", "name", BIRTHDAY_DATE);
+        User user1 = new User(0, "email.ru", "login", "name", BIRTHDAY_DATE);
         checkException(user1, "Почта не может быть пустой и должна содержать символ @");
     }
 

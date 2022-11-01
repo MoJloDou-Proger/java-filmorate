@@ -20,6 +20,7 @@ public class User {
     private String name;
     private LocalDate birthday;
     private Set<Integer> friends;
+    private String friendshipStatus;
 
     public User(int id, String email, String login, String name, LocalDate birthday) {
         this.id = id;

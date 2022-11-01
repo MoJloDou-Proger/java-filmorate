@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.storage.film;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.IdNotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
@@ -8,10 +9,12 @@ import ru.yandex.practicum.filmorate.model.Film;
 import java.util.ArrayList;
 import java.util.List;
 
+import static ru.yandex.practicum.filmorate.constants.Constants.IN_MEMORY_FILM_STORAGE;
 import static ru.yandex.practicum.filmorate.validation.Validation.validateFilm;
 
 @Slf4j
 @Component
+@Qualifier(IN_MEMORY_FILM_STORAGE)
 public class InMemoryFilmStorage implements FilmStorage {
     private int filmId = 1;
     private final List<Film> films;
