@@ -103,9 +103,7 @@ public class UserDbStorage implements UserStorage {
     public String addFriend(Integer id, Integer friendId) {
         if (isUsersNotNull(id, friendId)){
             String sqlQuery = "INSERT INTO friends(user_id, friend_id) VALUES (?, ?)";
-
             jdbcTemplate.update(sqlQuery, id, friendId);
-
             return String.format("Пользователь с id=%s добавлен в список друзей.", friendId);
         }
         throw new IdNotFoundException("Пользователь с указанным id не найден");

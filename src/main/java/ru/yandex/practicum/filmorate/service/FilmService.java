@@ -3,53 +3,32 @@ package ru.yandex.practicum.filmorate.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.exception.IdNotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
-import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
-import static ru.yandex.practicum.filmorate.constants.Constants.*;
+import static ru.yandex.practicum.filmorate.constants.Constants.FILM_DB_STORAGE;
 
 @Service
 public class FilmService {
     private final FilmStorage filmStorage;
-    private final UserStorage userStorage;
 
     @Autowired
-    public FilmService(@Qualifier(FILM_DB_STORAGE) FilmStorage filmStorage,
-                       @Qualifier(USER_DB_STORAGE) UserStorage userStorage) {
+    public FilmService(@Qualifier(FILM_DB_STORAGE) FilmStorage filmStorage) {
         this.filmStorage = filmStorage;
-        this.userStorage = userStorage;
     }
 
     public String putLike(Integer id, Integer userId) {
-        if (filmStorage.findFilm(id) != null && userStorage.findUser(userId) != null){
-            filmStorage.findFilm(id).getLikes().add(userId);
-            return String.format("Фильму с id=%s поставлен лайк пользователем с userId=%s.", id, userId);
-        }
-        throw new IdNotFoundException("Указанные id неверны.");
+        return filmStorage.putLike(id, userId);
     }
 
     public String deleteLike(Integer id, Integer userId) {
-        if (filmStorage.findFilm(id) != null && userStorage.findUser(userId) != null){
-            filmStorage.findFilm(id).getLikes().remove(userId);
-            return String.format("У фильма с id=%s удалён лайк пользователем с userId=%s.", id, userId);
-        }
-        throw new IdNotFoundException("Указанные id неверны.");
+        return filmStorage.deleteLike(id, userId);
     }
 
     public List<Film> getTopFilms(Integer count) {
-        List<Film> filmList = filmStorage.getFilms();
-        return filmList.stream().sorted((po, p1) -> {
-            if (po.getLikes().size() > p1.getLikes().size()){
-                return -1;
-            } else if (po.getLikes().size() < p1.getLikes().size()){
-                return 1;
-            } return 0;
-        }).limit(count).collect(Collectors.toList());
+        return filmStorage.getTopFilms(count);
     }
 
     public List<Film> getFilms(){

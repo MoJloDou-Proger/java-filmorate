@@ -1,13 +1,16 @@
 package ru.yandex.practicum.filmorate.storage.film;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.IdNotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.storage.user.InMemoryUserStorage;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static ru.yandex.practicum.filmorate.constants.Constants.IN_MEMORY_FILM_STORAGE;
 import static ru.yandex.practicum.filmorate.validation.Validation.validateFilm;
@@ -18,9 +21,12 @@ import static ru.yandex.practicum.filmorate.validation.Validation.validateFilm;
 public class InMemoryFilmStorage implements FilmStorage {
     private int filmId = 1;
     private final List<Film> films;
+    private final InMemoryUserStorage userStorage;
 
-    public InMemoryFilmStorage(List<Film> films) {
+    @Autowired
+    public InMemoryFilmStorage(List<Film> films, InMemoryUserStorage userStorage) {
         this.films = films;
+        this.userStorage = userStorage;
     }
 
     @Override
@@ -74,6 +80,36 @@ public class InMemoryFilmStorage implements FilmStorage {
     @Override
     public List<Film> getFilms(){
         return new ArrayList<>(films);
+    }
+
+    @Override
+    public String putLike(Integer id, Integer userId) {
+        if (findFilm(id) != null && userStorage.findUser(userId) != null){
+            findFilm(id).getLikes().add(userId);
+            return String.format("Фильму с id=%s поставлен лайк пользователем с userId=%s.", id, userId);
+        }
+        throw new IdNotFoundException("Указанные id неверны.");
+    }
+
+    @Override
+    public String deleteLike(Integer id, Integer userId) {
+        if (findFilm(id) != null && userStorage.findUser(userId) != null){
+            findFilm(id).getLikes().remove(userId);
+            return String.format("У фильма с id=%s удалён лайк пользователем с userId=%s.", id, userId);
+        }
+        throw new IdNotFoundException("Указанные id неверны.");
+    }
+
+    @Override
+    public List<Film> getTopFilms(Integer count) {
+        List<Film> filmList = getFilms();
+        return filmList.stream().sorted((po, p1) -> {
+            if (po.getLikes().size() > p1.getLikes().size()){
+                return -1;
+            } else if (po.getLikes().size() < p1.getLikes().size()){
+                return 1;
+            } return 0;
+        }).limit(count).collect(Collectors.toList());
     }
 
     private void increaseFilmId(){
