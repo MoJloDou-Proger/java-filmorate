@@ -62,3 +62,5 @@ CREATE TABLE IF NOT EXISTS film_genre (
     UNIQUE (genre_id, film_id)
 );
 
+
+

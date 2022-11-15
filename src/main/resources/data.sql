@@ -1,3 +1,12 @@
+DELETE FROM likes;
+DELETE FROM film_genre;
+DELETE FROM friends;
+DELETE FROM users;
+DELETE FROM films;
+
+ALTER TABLE users ALTER COLUMN user_id RESTART WITH 1;
+ALTER TABLE films ALTER COLUMN film_id RESTART WITH 1;
+
 MERGE INTO mpa_rating(rating_id, name) VALUES
                                            (1, 'G'),
                                            (2, 'PG'),

@@ -8,6 +8,7 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.dao.utils.FilmMapping;
+import ru.yandex.practicum.filmorate.exception.FindUserException;
 import ru.yandex.practicum.filmorate.exception.IdNotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
@@ -88,32 +89,37 @@ public class FilmDbStorage implements FilmStorage {
         validateFilm(film);
 
         int updateId = film.getId();
+        if (findFilm(updateId) != null) {
 
-        String sqlQuery = UPDATE_FILM_QUERY;
-        int upd = jdbcTemplate.update(sqlQuery
-                , film.getName()
-                , film.getDescription()
-                , film.getReleaseDate()
-                , film.getDuration()
-                , film.getMpa().getId()
-                , updateId);
+            String sqlQuery = UPDATE_FILM_QUERY;
+            int upd = jdbcTemplate.update(sqlQuery
+                    , film.getName()
+                    , film.getDescription()
+                    , film.getReleaseDate()
+                    , film.getDuration()
+                    , film.getMpa().getId()
+                    , updateId);
 
-        sqlQuery = "DELETE FROM film_genre WHERE film_id = ?";
-        jdbcTemplate.update(sqlQuery, updateId);
+            sqlQuery = "DELETE FROM film_genre WHERE film_id = ?";
+            jdbcTemplate.update(sqlQuery, updateId);
 
-        filmGenres(updateId, film.getGenres());
+            filmGenres(updateId, film.getGenres());
 
-        if (upd > 0){
-            log.info("Фильм c id={} обновлён", updateId);
-            return findFilm(updateId);
-        } else throw new IdNotFoundException("Фильм с id=" + updateId + " не найден");
+            if (upd > 0) {
+                log.info("Фильм c id={} обновлён", updateId);
+                return findFilm(updateId);
+            }
+        }
+        throw new FindUserException("По указанному id фильма получен null");
     }
 
     @Override
     public String deleteFilm(int id) {
-        String sqlQuery = "DELETE FROM films WHERE film_id = ?";
-        int del = jdbcTemplate.update(sqlQuery, id);
-        if (del > 0){
+        String sqlQuery = "DELETE FROM film_genre WHERE film_id = ?";
+        int deleteConnection = jdbcTemplate.update(sqlQuery, id);
+        String deleteSqlQuery = "DELETE FROM films WHERE film_id = ?";
+        int deleteFilm = jdbcTemplate.update(deleteSqlQuery, id);
+        if (deleteFilm > 0 && deleteConnection > 0){
             return String.format("Фильм c id=%s удалён", id);
         } else throw new IdNotFoundException("Фильм с id=" + id + " не найден");
     }
@@ -152,6 +158,10 @@ public class FilmDbStorage implements FilmStorage {
     public List<Film> getTopFilms(Integer count) {
         String sqlQuery = FILM_INFORMATION + "GROUP BY f.film_id ORDER BY COUNT(l.film_id) DESC LIMIT ?";
         return jdbcTemplate.query(sqlQuery, filmMapping::mapRowToFilm, count);
+    }
+
+    public UserDbStorage getUserDbStorage() {
+        return userDbStorage;
     }
 }
 

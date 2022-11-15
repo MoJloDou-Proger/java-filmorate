@@ -8,6 +8,7 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.dao.utils.UserMapping;
+import ru.yandex.practicum.filmorate.exception.FindUserException;
 import ru.yandex.practicum.filmorate.exception.IdNotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
@@ -106,7 +107,7 @@ public class UserDbStorage implements UserStorage {
             jdbcTemplate.update(sqlQuery, id, friendId);
             return String.format("Пользователь с id=%s добавлен в список друзей.", friendId);
         }
-        throw new IdNotFoundException("Пользователь с указанным id не найден");
+        throw new FindUserException("Среди указанных пользователей null");
     }
 
     @Override
@@ -119,7 +120,7 @@ public class UserDbStorage implements UserStorage {
 
             return String.format("Пользователь с id=%s удалён из списка друзей.", friendId);
         }
-        throw new IdNotFoundException("Пользователь с указанным id не найден");
+        throw new FindUserException("Среди указанных пользователей null");
     }
 
     @Override
@@ -134,7 +135,7 @@ public class UserDbStorage implements UserStorage {
                               ")";
             return jdbcTemplate.query(sqlQuery, userMapping::mapRowToUser,id);
         }
-        throw new IdNotFoundException("Пользователь с указанным id не найден");
+        throw new FindUserException("Среди указанных пользователей null");
     }
 
     @Override
@@ -149,9 +150,9 @@ public class UserDbStorage implements UserStorage {
                                         "ON f1.friend_id = f2.friend_id AND f1.user_id <> f2.user_id " +
                                     "WHERE f1.user_id = ? AND f2.user_id = ?" +
                               ")";
-            return jdbcTemplate.query(sqlQuery, userMapping::mapRowToUser,id, otherId);
+            return jdbcTemplate.query(sqlQuery, userMapping::mapRowToUser, id, otherId);
         }
-        throw new IdNotFoundException("Пользователь с указанным id не найден");
+        throw new FindUserException("Среди указанных пользователей null");
     }
 
     @Override
