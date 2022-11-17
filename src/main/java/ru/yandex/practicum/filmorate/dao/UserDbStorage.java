@@ -28,6 +28,36 @@ public class UserDbStorage implements UserStorage {
     private final JdbcTemplate jdbcTemplate;
     private final UserMapping userMapping;
 
+    private static final String ALL_USERS = "SELECT * FROM users";
+    private static final String UPDATE_USER_BY_ID =
+            "UPDATE users SET " +
+                         "email = ?, " +
+                         "login = ?, " +
+                         "name = ?, " +
+                         "birthday = ? " +
+            "WHERE user_id = ?";
+    private static final String DELETE_USER_BY_ID = "DELETE FROM users WHERE user_id = ?";
+    private static final String FIND_USER_BY_ID = "SELECT * FROM users WHERE user_id = ?";
+    private static final String ADD_FRIEND = "INSERT INTO friends(user_id, friend_id) VALUES (?, ?)";
+    private static final String DELETE_FRIEND = "DELETE FROM friends WHERE user_id = ? AND friend_id = ?";
+    private static final String RECEIVE_FRIENDS =
+            "SELECT * " +
+            "FROM users AS u " +
+            "WHERE u.user_id IN (" +
+                "SELECT f.friend_id " +
+                "FROM friends AS f " +
+                "WHERE f.user_id = ?" +
+            ")";
+    private static final String RECEIVE_COMMON_FRIENDS =
+            "SELECT * " +
+            "FROM users AS u " +
+            "WHERE u.user_id IN (" +
+                "SELECT f1.friend_id " +
+                "FROM friends AS f1 " +
+                "JOIN friends AS f2 " +
+                    "ON f1.friend_id = f2.friend_id AND f1.user_id <> f2.user_id " +
+                "WHERE f1.user_id = ? AND f2.user_id = ?" +
+            ")";
     public UserDbStorage(JdbcTemplate jdbcTemplate, UserMapping userMapping){
         this.jdbcTemplate=jdbcTemplate;
         this.userMapping = userMapping;
@@ -35,8 +65,7 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public List<User> allUsers() {
-        String sqlQuery = "select * from users";
-        return jdbcTemplate.query(sqlQuery, userMapping::mapRowToUser);
+        return jdbcTemplate.query(ALL_USERS, userMapping::mapRowToUser);
     }
 
     @Override
@@ -63,12 +92,8 @@ public class UserDbStorage implements UserStorage {
     @Override
     public User updateUser(User user) {
         validateUser(user);
-
         int updateId = user.getId();
-        String sqlQuery = "UPDATE users SET " +
-                "email = ?, login = ?, name = ?, birthday = ? " +
-                "where user_id = ?";
-        int upd = jdbcTemplate.update(sqlQuery
+        int upd = jdbcTemplate.update(UPDATE_USER_BY_ID
                 , user.getEmail()
                 , user.getLogin()
                 , user.getName()
@@ -82,8 +107,7 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public String deleteUser(int id) {
-        String sqlQuery = "DELETE FROM users WHERE user_id = ?";
-        int del = jdbcTemplate.update(sqlQuery, id);
+        int del = jdbcTemplate.update(DELETE_USER_BY_ID, id);
         if (del > 0){
             return String.format("Пользователь c id=%s удалён", id);
         } else throw new IdNotFoundException("Пользователь с id=" + id + " не найден");
@@ -91,9 +115,8 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public User findUser(int id) {
-        String sqlQuery = "SELECT * FROM users WHERE user_id = ?";
         try {
-            return jdbcTemplate.queryForObject(sqlQuery, userMapping::mapRowToUser, id);
+            return jdbcTemplate.queryForObject(FIND_USER_BY_ID, userMapping::mapRowToUser, id);
         } catch (EmptyResultDataAccessException e){
             throw new IdNotFoundException("Пользователь с id=" + id + " не найден");
         }
@@ -103,8 +126,7 @@ public class UserDbStorage implements UserStorage {
     @Override
     public String addFriend(Integer id, Integer friendId) {
         if (isUsersNotNull(id, friendId)){
-            String sqlQuery = "INSERT INTO friends(user_id, friend_id) VALUES (?, ?)";
-            jdbcTemplate.update(sqlQuery, id, friendId);
+            jdbcTemplate.update(ADD_FRIEND, id, friendId);
             return String.format("Пользователь с id=%s добавлен в список друзей.", friendId);
         }
         throw new FindUserException("Среди указанных пользователей null");
@@ -113,11 +135,8 @@ public class UserDbStorage implements UserStorage {
     @Override
     public String deleteFriend(Integer id, Integer friendId) {
         if (isUsersNotNull(id, friendId)){
-            String sqlQuery = "DELETE FROM friends WHERE user_id = ? AND friend_id = ?";
-
-            jdbcTemplate.update(sqlQuery, id, friendId);
-            jdbcTemplate.update(sqlQuery, friendId, id);
-
+            jdbcTemplate.update(DELETE_FRIEND, id, friendId);
+            jdbcTemplate.update(DELETE_FRIEND, friendId, id);
             return String.format("Пользователь с id=%s удалён из списка друзей.", friendId);
         }
         throw new FindUserException("Среди указанных пользователей null");
@@ -126,14 +145,7 @@ public class UserDbStorage implements UserStorage {
     @Override
     public List<User> receiveFriends(Integer id) {
         if (findUser(id) != null){
-            String sqlQuery = "SELECT * " +
-                              "FROM users AS u " +
-                              "WHERE u.user_id IN (" +
-                                    "SELECT f.friend_id " +
-                                    "FROM friends AS f " +
-                                    "WHERE f.user_id = ?" +
-                              ")";
-            return jdbcTemplate.query(sqlQuery, userMapping::mapRowToUser,id);
+            return jdbcTemplate.query(RECEIVE_FRIENDS, userMapping::mapRowToUser,id);
         }
         throw new FindUserException("Среди указанных пользователей null");
     }
@@ -141,16 +153,7 @@ public class UserDbStorage implements UserStorage {
     @Override
     public List<User> receiveCommonFriends(Integer id, Integer otherId) {
         if (isUsersNotNull(id, otherId)){
-            String sqlQuery = "SELECT * " +
-                              "FROM users AS u " +
-                              "WHERE u.user_id IN (" +
-                                    "SELECT f1.friend_id " +
-                                    "FROM friends AS f1 " +
-                                    "JOIN friends AS f2 " +
-                                        "ON f1.friend_id = f2.friend_id AND f1.user_id <> f2.user_id " +
-                                    "WHERE f1.user_id = ? AND f2.user_id = ?" +
-                              ")";
-            return jdbcTemplate.query(sqlQuery, userMapping::mapRowToUser, id, otherId);
+            return jdbcTemplate.query(RECEIVE_COMMON_FRIENDS, userMapping::mapRowToUser, id, otherId);
         }
         throw new FindUserException("Среди указанных пользователей null");
     }

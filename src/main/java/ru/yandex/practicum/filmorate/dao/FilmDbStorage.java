@@ -30,6 +30,15 @@ public class FilmDbStorage implements FilmStorage {
     private final FilmMapping filmMapping;
     private final UserDbStorage userDbStorage;
 
+    private static final String ALL_FILMS = FILM_INFORMATION + "GROUP BY f.film_id";
+    private static final String DELETE_FILM_GENRE = "DELETE FROM film_genre WHERE film_id = ?";
+    private static final String DELETE_FILM = "DELETE FROM films WHERE film_id = ?";
+    private static final String FIND_FILM = FILM_INFORMATION + "WHERE f.film_id = ? GROUP BY f.film_id";
+    private static final String ADD_LIKE = "INSERT INTO likes (film_id, user_id) VALUES (?, ?)";
+    private static final String DELETE_LIKE = "DELETE FROM likes WHERE film_id = ? AND user_id = ?";
+    private static final String TOP_FILMS = FILM_INFORMATION + "GROUP BY f.film_id ORDER BY COUNT(l.film_id) " +
+            "DESC LIMIT ?";
+
     public FilmDbStorage(JdbcTemplate jdbcTemplate, FilmMapping filmMapping, UserDbStorage userDbStorage) {
         this.jdbcTemplate = jdbcTemplate;
         this.filmMapping = filmMapping;
@@ -38,7 +47,7 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public List<Film> getFilms() {
-        return jdbcTemplate.query(FILM_INFORMATION + "GROUP BY f.film_id", filmMapping::mapRowToFilm);
+        return jdbcTemplate.query(ALL_FILMS, filmMapping::mapRowToFilm);
     }
 
     @Override
@@ -91,8 +100,7 @@ public class FilmDbStorage implements FilmStorage {
         int updateId = film.getId();
         if (findFilm(updateId) != null) {
 
-            String sqlQuery = UPDATE_FILM_QUERY;
-            int upd = jdbcTemplate.update(sqlQuery
+            int upd = jdbcTemplate.update(UPDATE_FILM_QUERY
                     , film.getName()
                     , film.getDescription()
                     , film.getReleaseDate()
@@ -100,9 +108,7 @@ public class FilmDbStorage implements FilmStorage {
                     , film.getMpa().getId()
                     , updateId);
 
-            sqlQuery = "DELETE FROM film_genre WHERE film_id = ?";
-            jdbcTemplate.update(sqlQuery, updateId);
-
+            jdbcTemplate.update(DELETE_FILM_GENRE, updateId);
             filmGenres(updateId, film.getGenres());
 
             if (upd > 0) {
@@ -115,10 +121,8 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public String deleteFilm(int id) {
-        String sqlQuery = "DELETE FROM film_genre WHERE film_id = ?";
-        int deleteConnection = jdbcTemplate.update(sqlQuery, id);
-        String deleteSqlQuery = "DELETE FROM films WHERE film_id = ?";
-        int deleteFilm = jdbcTemplate.update(deleteSqlQuery, id);
+        int deleteConnection = jdbcTemplate.update(DELETE_FILM_GENRE, id);
+        int deleteFilm = jdbcTemplate.update(DELETE_FILM, id);
         if (deleteFilm > 0 && deleteConnection > 0){
             return String.format("Фильм c id=%s удалён", id);
         } else throw new IdNotFoundException("Фильм с id=" + id + " не найден");
@@ -126,9 +130,8 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public Film findFilm(int filmId) {
-        String sqlQuery = FILM_INFORMATION + "WHERE f.film_id = ? GROUP BY f.film_id";
         try {
-            return jdbcTemplate.queryForObject(sqlQuery, filmMapping::mapRowToFilm, filmId);
+            return jdbcTemplate.queryForObject(FIND_FILM, filmMapping::mapRowToFilm, filmId);
         } catch (EmptyResultDataAccessException e){
             throw new IdNotFoundException("Фильм с id=" + filmId + " не найден");
         }
@@ -137,8 +140,7 @@ public class FilmDbStorage implements FilmStorage {
     @Override
     public String putLike(Integer filmId, Integer userId) {
         if (findFilm(filmId) != null && userDbStorage.findUser(userId) != null){
-            String sqlQuery = "INSERT INTO likes (film_id, user_id) VALUES (?, ?)";
-            jdbcTemplate.update(sqlQuery, filmId, userId);
+            jdbcTemplate.update(ADD_LIKE, filmId, userId);
             return String.format("Фильму с id=%s поставлен лайк пользователем с userId=%s.", filmId, userId);
         }
         throw new IdNotFoundException("Указанные id неверны.");
@@ -147,8 +149,7 @@ public class FilmDbStorage implements FilmStorage {
     @Override
     public String deleteLike(Integer filmId, Integer userId) {
         if (findFilm(filmId) != null && userDbStorage.findUser(userId) != null){
-            String sqlQuery = "DELETE FROM likes WHERE film_id = ? AND user_id = ?";
-            jdbcTemplate.update(sqlQuery, filmId, userId);
+            jdbcTemplate.update(DELETE_LIKE, filmId, userId);
             return String.format("У фильма с id=%s удалён лайк пользователем с userId=%s.", filmId, userId);
         }
         throw new IdNotFoundException("Указанные id неверны.");
@@ -156,8 +157,7 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public List<Film> getTopFilms(Integer count) {
-        String sqlQuery = FILM_INFORMATION + "GROUP BY f.film_id ORDER BY COUNT(l.film_id) DESC LIMIT ?";
-        return jdbcTemplate.query(sqlQuery, filmMapping::mapRowToFilm, count);
+        return jdbcTemplate.query(TOP_FILMS, filmMapping::mapRowToFilm, count);
     }
 
     public UserDbStorage getUserDbStorage() {

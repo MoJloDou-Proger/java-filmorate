@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static ru.yandex.practicum.filmorate.constants.Constants.IN_MEMORY_USER_STORAGE;
 import static ru.yandex.practicum.filmorate.validation.Validation.validateUser;
@@ -117,13 +118,11 @@ public class InMemoryUserStorage implements UserStorage{
     private List<User> getListOfFriends(Set<Integer> friendsId){
         List<User> listOfFriends = new ArrayList<>();
         if (friendsId != null && !friendsId.isEmpty()){
-            for (Integer i : friendsId){
-                for (User u : allUsers()){
-                    if (u.getId() == i){
-                        listOfFriends.add(u);
-                    }
-                }
-            }
+            listOfFriends = allUsers().stream()
+                    .filter(u -> friendsId.stream()
+                            .filter(fr -> u.getId() == fr)
+                            .isParallel())
+                    .collect(Collectors.toList());
         }
         return listOfFriends;
     }

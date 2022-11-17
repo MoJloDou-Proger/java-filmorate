@@ -7,17 +7,17 @@ import ru.yandex.practicum.filmorate.model.User;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
+
+import static ru.yandex.practicum.filmorate.constants.Constants.DATE_FORMAT;
 
 @Component
 @NoArgsConstructor
 public class UserMapping {
 
     public User mapRowToUser(ResultSet resultSet, int rowNum) throws SQLException {
-        final DateTimeFormatter format = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         return new User(resultSet.getInt("user_id"), resultSet.getString("email"),
                 resultSet.getString("login"),
                 resultSet.getString("name"),
-                LocalDate.parse(resultSet.getString("birthday"), format));
+                LocalDate.parse(resultSet.getString("birthday"), DATE_FORMAT));
     }
 }

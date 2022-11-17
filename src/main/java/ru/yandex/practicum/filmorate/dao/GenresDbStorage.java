@@ -13,6 +13,9 @@ public class GenresDbStorage {
     private final JdbcTemplate jdbcTemplate;
     private final GenresMapping genresMapping;
 
+    private static final String ALL_GENRES = "SELECT * FROM genre";
+    private static final String GENRES_BY_ID = "SELECT * FROM genre WHERE genre_id = ?";
+
     @Autowired
     public GenresDbStorage(JdbcTemplate jdbcTemplate, GenresMapping genresMapping) {
         this.jdbcTemplate = jdbcTemplate;
@@ -20,12 +23,10 @@ public class GenresDbStorage {
     }
 
     public List<Genre> getAllGenres(){
-        String sqlQuery = "SELECT * FROM genre";
-        return jdbcTemplate.query(sqlQuery, genresMapping::mapRowToGenre);
+        return jdbcTemplate.query(ALL_GENRES, genresMapping::mapRowToGenre);
     }
 
     public Genre getGenre(Integer id){
-        String sqlQuery = "SELECT * FROM genre WHERE genre_id = ?";
-        return jdbcTemplate.queryForObject(sqlQuery, genresMapping::mapRowToGenre, id);
+        return jdbcTemplate.queryForObject(GENRES_BY_ID, genresMapping::mapRowToGenre, id);
     }
 }
