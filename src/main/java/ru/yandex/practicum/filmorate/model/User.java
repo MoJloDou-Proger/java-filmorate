@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.model;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
@@ -11,6 +12,7 @@ import java.util.Set;
 
 @Getter
 @Setter
+@ToString
 public class User {
     private int id;
     @NotBlank @Email
@@ -20,6 +22,7 @@ public class User {
     private String name;
     private LocalDate birthday;
     private Set<Integer> friends;
+    private String friendshipStatus;
 
     public User(int id, String email, String login, String name, LocalDate birthday) {
         this.id = id;

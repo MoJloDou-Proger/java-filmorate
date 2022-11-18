@@ -32,6 +32,7 @@ public class Validation {
                 "быть не раньше 28.12.1895");
         if (film.getDuration() <= 0) throw new ValidationException("Продолжительность фильма должна быть " +
                 "положительной");
+        if (film.getMpa() == null) throw new ValidationException("Рейтинг MPA не должен быть null");
     }
 
     public static void checkId(Integer id1, Integer id2){

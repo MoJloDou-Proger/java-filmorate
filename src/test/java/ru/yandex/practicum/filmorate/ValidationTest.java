@@ -4,11 +4,13 @@ import org.junit.jupiter.api.Test;
 import ru.yandex.practicum.filmorate.exception.IdNotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.MpaRating;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.film.InMemoryFilmStorage;
 import ru.yandex.practicum.filmorate.storage.user.InMemoryUserStorage;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -32,7 +34,8 @@ public class ValidationTest {
 
     @Test
     public void correctValidationOfFilm() {
-        Film film = new Film(0, "name", "d".repeat(200), MIN_ALLOWED_DATE, 1);
+        Film film = new Film(0, "name", "d".repeat(200), MIN_ALLOWED_DATE, 1, new MpaRating(),
+                0, new ArrayList<>());
         assertEquals("name", film.getName());
         assertEquals("d".repeat(200), film.getDescription());
         assertEquals(MIN_ALLOWED_DATE, film.getReleaseDate());
@@ -44,7 +47,7 @@ public class ValidationTest {
         User user = new User(0, "", "login", "name", BIRTHDAY_DATE);
         checkException(user, "Почта не может быть пустой и должна содержать символ @");
 
-        User user1 = new User(0, "emaile.ru", "login", "name", BIRTHDAY_DATE);
+        User user1 = new User(0, "email.ru", "login", "name", BIRTHDAY_DATE);
         checkException(user1, "Почта не может быть пустой и должна содержать символ @");
     }
 
@@ -90,37 +93,43 @@ public class ValidationTest {
 
     @Test
     public void releaseDateMustBeEqualOrMoreMinimumAllowedDate() {
-        Film film = new Film(0, "n", "d", DATE_BEFORE_MIN_ALLOWED, 1);
+        Film film = new Film(0, "n", "d", DATE_BEFORE_MIN_ALLOWED, 1, new MpaRating(),
+                0, new ArrayList<>());
         checkException(film, "Дата релиза должна быть не раньше 28.12.1895");
     }
 
     @Test
     public void durationOfTheFilmShouldBePositive() {
-        Film film = new Film(0, "film_name", "description", MIN_ALLOWED_DATE, 0);
+        Film film = new Film(0, "film_name", "description", MIN_ALLOWED_DATE, 0,
+                new MpaRating(), 0, new ArrayList<>());
         checkException(film, "Продолжительность фильма должна быть положительной");
     }
 
     @Test
     public void nameCanNotBeEmptyOrNull() {
-        Film film = new Film(0, "", "description", MIN_ALLOWED_DATE, 111);
+        Film film = new Film(0, "", "description", MIN_ALLOWED_DATE, 111, new MpaRating(),
+                0, new ArrayList<>());
         checkException(film, "Название не может быть пустым или null");
 
-        Film film1 = new Film(0, null, "description", MIN_ALLOWED_DATE, 111);
+        Film film1 = new Film(0, null, "description", MIN_ALLOWED_DATE, 111,
+                new MpaRating(), 0, new ArrayList<>());
         checkException(film1, "Название не может быть пустым или null");
     }
 
     @Test
     public void descriptionShouldNotBeMoreThan200Characters() {
-        Film film = new Film(0, "film_name", "d".repeat(201), MIN_ALLOWED_DATE, 111);
+        Film film = new Film(0, "film_name", "d".repeat(201), MIN_ALLOWED_DATE, 111,
+                new MpaRating(), 0, new ArrayList<>());
         checkException(film, "Описание не должно превышать 200 символов");
     }
 
     @Test
     public void updateFilmWithAnUnknownId() {
-        Film film = new Film(9999, "film_name", "description", MIN_ALLOWED_DATE, 111);
+        Film film = new Film(9999, "film_name", "description", MIN_ALLOWED_DATE, 111,
+                new MpaRating(), 0, new ArrayList<>());
         final IdNotFoundException exception = assertThrows(
                 IdNotFoundException.class,
-                () -> new InMemoryFilmStorage(List.of()).updateFilm(film));
+                () -> new InMemoryFilmStorage(List.of(), new InMemoryUserStorage(List.of())).updateFilm(film));
 
         assertEquals("Фильм с id=9999 не найден", exception.getMessage());
     }
