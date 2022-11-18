@@ -1,5 +1,5 @@
 # java-filmorate
 
 ### Схема базы данных приложения
-![](src/image/db_diagram.PNG)
+![Схема БД](https://github.com/MoJloDou-Proger/java-filmorate/blob/main/src/image/db_diagram.PNG)
 
